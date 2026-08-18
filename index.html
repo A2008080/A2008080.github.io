@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英语家教工作台</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b6cff">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="英语工作台">
+<style>
+  :root{
+    --bg:#f4f5fa; --panel:#ffffff; --ink:#1f2335; --muted:#6b7184;
+    --line:#e7e8f0; --brand:#5b6cff; --brand-d:#4450e0; --brand-bg:#eef0ff;
+    --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
+    --shadow:0 6px 22px rgba(40,46,80,.08); --radius:14px;
+    --font:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#cfd2e6;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
+  textarea{resize:vertical;line-height:1.6}
+
+  .app{display:flex;height:100vh;overflow:hidden}
+  /* ===== 侧边导航 ===== */
+  .rail{width:214px;background:linear-gradient(180deg,#2b2f4d,#1d2040);color:#cdd0ea;display:flex;flex-direction:column;flex-shrink:0}
+  .brand{padding:22px 20px 18px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#7c83ff,#5b6cff);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .brand h1{font-size:15px;font-weight:700;color:#fff;line-height:1.25}
+  .brand span{font-size:11px;color:#9499c0}
+  .nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:4px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;color:#b8bce0;font-size:13.5px;font-weight:500;transition:.15s;text-align:left}
+  .nav-item .ic{width:20px;text-align:center;font-size:16px;flex-shrink:0}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-item.active{background:linear-gradient(135deg,#5b6cff,#4450e0);color:#fff;box-shadow:0 6px 16px rgba(91,108,255,.35)}
+  .rail-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#7e84a8}
+
+  /* ===== 主区 ===== */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .topbar{height:60px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+  .topbar h2{font-size:17px;font-weight:700}
+  .topbar .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+  .clock{font-variant-numeric:tabular-nums;font-weight:700;color:var(--brand);font-size:15px}
+  .content{flex:1;overflow-y:auto;padding:24px}
+  .tab{display:none;height:100%;flex-direction:column}
+  .tab.active{display:flex}
+
+  /* 通用 */
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-size:13px;font-weight:600;background:#eef0f6;color:var(--ink);transition:.15s;border:1px solid transparent}
+  .btn:hover{background:#e2e4f2}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-d)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .btn.ghost:hover{color:var(--ink);background:#f6f7fc}
+  .btn.danger{color:var(--danger)}
+  .btn.sm{padding:6px 11px;font-size:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .tag{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .tag.上课{background:#e7f6ff;color:#0a8fdc} .tag.备课{background:#eef0ff;color:var(--brand-d)}
+  .tag.知识点{background:#f0f7ee;color:#2f9e44} .tag.其他{background:#f3f0fb;color:#7c3aed}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:13px}
+  .empty .em{font-size:34px;display:block;margin-bottom:8px;opacity:.5}
+
+  /* ===== 日历 ===== */
+  .cal-wrap{display:flex;gap:18px;flex:1;min-height:0}
+  .cal-side{flex:1.35;display:flex;flex-direction:column;min-width:0}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-head .ym{font-size:16px;font-weight:700}
+  .cal-head .ym small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
+  .cal-grid{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .cal-week,.cal-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-week{margin-bottom:6px}
+  .cal-week div{text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding:4px 0}
+  .cal-cell{aspect-ratio:1/.92;border-radius:9px;padding:6px 7px;display:flex;flex-direction:column;gap:3px;cursor:pointer;transition:.12s;position:relative;border:1px solid transparent}
+  .cal-cell:hover{background:#f6f7fc}
+  .cal-cell.mute{color:#c2c5d6;cursor:default}
+  .cal-cell.mute:hover{background:transparent}
+  .cal-cell.today{border-color:var(--brand)}
+  .cal-cell.sel{background:var(--brand-bg);border-color:var(--brand)}
+  .cal-cell .d{font-size:14px;font-weight:600}
+  .cal-cell.today .d{color:var(--brand)}
+  .cal-cell .dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:auto}
+  .cal-cell .dot{width:6px;height:6px;border-radius:50%;background:var(--brand)}
+  .cal-cell .dot.done{background:var(--ok)}
+  .cal-legend{display:flex;gap:14px;font-size:11px;color:var(--muted);padding:9px 4px 0;flex-wrap:wrap}
+  .cal-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+
+  .day-side{flex:1;display:flex;flex-direction:column;min-width:0}
+  .day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .day-head .dt{font-size:16px;font-weight:700}
+  .day-head .dt small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
+  .progress{height:7px;background:#ecedf6;border-radius:6px;overflow:hidden;margin:9px 0 4px}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,#5b6cff,#22c55e);border-radius:6px;transition:.3s}
+  .prog-txt{font-size:11px;color:var(--muted)}
+  .task-list{display:flex;flex-direction:column;gap:9px;flex:1;overflow-y:auto;padding-right:4px}
+  .task{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 14px;transition:.15s}
+  .task:hover{border-color:#d4d6ea}
+  .task.done{background:#f7fcf8;border-color:#c9eecf}
+  .task.done .t-title{text-decoration:line-through;color:var(--muted)}
+  .task .t-time{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--brand);min-width:46px;padding-top:1px}
+  .task.done .t-time{color:var(--ok)}
+  .task .t-mid{flex:1;min-width:0}
+  .t-title{font-size:13.5px;font-weight:600}
+  .t-desc{font-size:12px;color:var(--muted);margin-top:2px;white-space:pre-wrap}
+  .t-meta{display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap}
+  .chk{width:22px;height:22px;border-radius:7px;border:2px solid #c9ccdd;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .chk:hover{border-color:var(--brand)}
+  .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .chk svg{opacity:0;transform:scale(.5);transition:.15s}
+  .chk.on svg{opacity:1;transform:scale(1)}
+  .bell{font-size:13px;color:var(--warn)}
+  .task .t-act{display:flex;gap:5px;opacity:0;transition:.15s}
+  .task:hover .t-act{opacity:1}
+  .icon-btn{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+  .icon-btn:hover{background:#f1f2f9;color:var(--ink)}
+
+  /* ===== 知识点 ===== */
+  .kp-wrap{display:flex;gap:18px;flex:1;min-height:0}
+  .kp-side{width:250px;display:flex;flex-direction:column;flex-shrink:0}
+  .kp-side .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+  .kp-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-right:3px}
+  .kp-card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;cursor:pointer;transition:.15s}
+  .kp-card:hover{border-color:#d4d6ea}
+  .kp-card.active{border-color:var(--brand);background:var(--brand-bg)}
+  .kp-card .kt{font-size:13.5px;font-weight:700;display:flex;justify-content:space-between;align-items:start;gap:8px}
+  .kp-card .km{font-size:11px;color:var(--muted);margin-top:3px}
+  .kp-edit{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+  .kp-edit.scroll{overflow-y:auto;padding-right:6px}
+  .sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px}
+  .sec-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .sec-h .si{width:26px;height:26px;border-radius:8px;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .sec-h h3{font-size:14.5px;font-weight:700}
+  .sec-h .hint{font-size:11px;color:var(--muted);font-weight:500;margin-left:auto}
+  label.fl{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  input.in,textarea.in,select.in{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fbfbfe;transition:.12s}
+  input.in:focus,textarea.in:focus,select.in:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px var(--brand-bg)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .step-item{border:1px dashed var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;background:#fbfbff}
+  .step-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+  .step-head .sn{font-size:11px;font-weight:700;color:var(--brand)}
+  .qa-item{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;background:#fff9ef}
+  .qa-item .qh{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .qa-item .qh .qn{font-size:11px;font-weight:700;color:var(--warn)}
+  .sub-add{display:flex;gap:7px;flex-wrap:wrap}
+  .summary-box{background:linear-gradient(135deg,#f0f7ff,#f3f0ff);border:1px solid #dfe3ff;border-radius:11px;padding:13px 15px;font-size:13px;white-space:pre-wrap;line-height:1.7}
+  .kp-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+
+  /* ===== 思维导图 ===== */
+  .mm-wrap{display:flex;flex-direction:column;flex:1;min-height:0;gap:12px}
+  .mm-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .mm-body{flex:1;display:flex;gap:14px;min-height:0}
+  .mm-edit{width:300px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;flex-shrink:0}
+  .mm-edit textarea{flex:1;border:none;border-radius:0;padding:14px;font-size:12.5px;line-height:1.7;font-family:"SFMono-Regular",Consolas,monospace}
+  .mm-edit textarea:focus{outline:none;background:#fbfbfe}
+  .mm-edit .mh{padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .mm-view{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;position:relative;min-width:0}
+  #mindmap-svg{width:100%;height:100%;display:block;background:radial-gradient(circle at 30% 20%,#fbfbff,#fff)}
+  .mm-fallback{padding:18px;font-size:13px;line-height:1.9;overflow-y:auto;height:100%}
+  .mm-fallback ul{list-style:none}
+  .mm-fallback li{padding-left:16px;position:relative}
+  .mm-fallback li::before{content:"└";position:absolute;left:0;color:var(--muted)}
+  .mm-fallback .root{font-weight:700;font-size:16px;color:var(--brand)}
+  .mm-tip{position:absolute;bottom:10px;left:12px;font-size:11px;color:var(--muted);background:rgba(255,255,255,.8);padding:4px 9px;border-radius:7px}
+
+  /* ===== 解题步骤 ===== */
+  .ps-wrap{display:flex;gap:18px;flex:1;min-height:0}
+  .ps-side{width:300px;display:flex;flex-direction:column;flex-shrink:0}
+  .ps-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:3px}
+  .ps-card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;cursor:pointer;transition:.15s}
+  .ps-card:hover{border-color:#d4d6ea}
+  .ps-card.active{border-color:var(--brand);background:var(--brand-bg)}
+  .ps-card .pt{font-size:13px;font-weight:600}
+  .ps-card .pm{font-size:11px;color:var(--muted);margin-top:3px}
+  .ps-edit{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding-right:6px}
+  .ps-solution{display:flex;flex-direction:column;gap:0}
+  .ps-step{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .ps-step:last-child{border-bottom:none}
+  .ps-step .num{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ps-step .body{flex:1}
+  .ps-step .body .sh{font-size:12px;font-weight:700;color:var(--brand-d);margin-bottom:3px}
+  .ps-step .body .sd{font-size:13px;white-space:pre-wrap}
+  .arrow-down{text-align:center;color:var(--muted);font-size:16px;line-height:1}
+
+  /* ===== 弹层 ===== */
+  .mask{position:fixed;inset:0;background:rgba(24,26,46,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+  .mask.show{display:flex}
+  .modal{background:var(--panel);border-radius:16px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(20,22,40,.3)}
+  .modal-h{padding:18px 22px;border-bottom:1px solid var(--line);font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .modal-b{padding:20px 22px}
+  .modal-f{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  .row-time{display:flex;gap:11px}
+  .row-time > div{flex:1}
+  .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
+  .switch input{display:none}
+  .track{width:40px;height:22px;border-radius:20px;background:#d4d6e6;position:relative;transition:.15s}
+  .track::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+  .switch input:checked + .track{background:var(--brand)}
+  .switch input:checked + .track::after{transform:translateX(18px)}
+
+  /* toast */
+  .toasts{position:fixed;top:18px;right:18px;display:flex;flex-direction:column;gap:9px;z-index:300}
+  .toast{background:#fff;border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:11px;padding:12px 16px;box-shadow:0 10px 30px rgba(20,22,40,.18);min-width:260px;animation:slideIn .3s}
+  .toast.alarm{border-left-color:var(--warn)}
+  .toast .tt{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px}
+  .toast .tb{font-size:12px;color:var(--muted);margin-top:3px}
+  @keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .alarm-flash{animation:flash 1s infinite}
+  @keyframes flash{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}
+
+  @media(max-width:980px){
+    .cal-wrap,.kp-wrap,.ps-wrap,.mm-body{flex-direction:column}
+    .cal-side,.day-side,.kp-side,.ps-side,.mm-edit{width:auto;flex:none}
+    .rail{display:none}
+    .main{padding-bottom:64px}
+  }
+  .botbar{display:none}
+  /* ===== 手机端：底部导航 + 触控优化 ===== */
+  @media(max-width:760px){
+    .botbar{display:flex}
+    body{font-size:15px;-webkit-tap-highlight-color:transparent}
+    .content{padding:14px 12px 84px}
+    .topbar{height:54px;padding:0 14px}
+    .topbar h2{font-size:16px}
+    .topbar .sub{display:none}
+    .topbar-right .clock{font-size:14px}
+    #installBtn{padding:7px 11px;font-size:12px}
+    /* 底部 Tab 栏 */
+    .rail{display:none}
+    .botbar{position:fixed;bottom:0;left:0;right:0;height:62px;background:#fff;
+      border-top:1px solid var(--line);display:flex;z-index:150;
+      box-shadow:0 -4px 20px rgba(40,46,80,.08);padding-bottom:env(safe-area-inset-bottom)}
+    .botbar .nav-item{flex:1;flex-direction:column;gap:3px;padding:8px 0 6px;border-radius:0;font-size:11px;font-weight:500}
+    .botbar .nav-item .ic{font-size:20px}
+    .botbar .nav-item.active{background:none;color:var(--brand)}
+    .botbar .nav-item.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+      width:30px;height:3px;background:var(--brand);border-radius:0 0 3px 3px}
+    .botbar .nav-item{position:relative}
+    /* 日历 */
+    .cal-grid{padding:6px}
+    .cal-cell{padding:4px 3px}
+    .cal-cell .d{font-size:13px}
+    .cal-week div{font-size:11px}
+    /* 任务卡片 */
+    .task{padding:11px 12px}
+    .task .t-time{font-size:13px;min-width:42px}
+    .chk{width:26px;height:26px}
+    .task .t-act{opacity:1}
+    .icon-btn{width:34px;height:34px;font-size:16px}
+    .btn{padding:11px 16px}
+    .btn.sm{padding:8px 12px}
+    /* 知识点/解题 编辑区 */
+    .sec{padding:13px 14px;margin-bottom:12px}
+    .grid2{grid-template-columns:1fr}
+    .step-item,.qa-item{padding:11px}
+    input.in,textarea.in,select.in{padding:11px 12px;font-size:15px}
+    /* 思维导图 */
+    .mm-edit{width:auto;height:200px;flex-shrink:0}
+    .mm-view{min-height:320px}
+    /* 弹层全屏化 */
+    .mask{padding:0;align-items:flex-end}
+    .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;max-height:92vh}
+    .modal-h{padding:16px 18px}
+    .modal-b{padding:18px}
+    .modal-f{padding:14px 18px 18px}
+    /* Toast 不遮挡 */
+    .toasts{top:12px;right:12px;left:12px}
+    .toast{min-width:auto}
+    .day-head{flex-wrap:wrap;gap:8px}
+    .cal-head{flex-wrap:wrap;gap:8px}
+    .kp-toolbar,.mm-toolbar{flex-wrap:wrap}
+    .mm-tip{display:none}
+  }
+  @media(max-width:380px){
+    .cal-cell .d{font-size:12px}
+    .cal-cell .dot{width:5px;height:5px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边导航 -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="logo">📖</div>
+      <div><h1>英语家教工作台</h1><span>EngTutor Bench</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-tab="cal"><span class="ic">📅</span><span>日程日历</span></button>
+      <button class="nav-item" data-tab="kp"><span class="ic">📝</span><span>知识点构建</span></button>
+      <button class="nav-item" data-tab="mm"><span class="ic">🧠</span><span>思维导图</span></button>
+      <button class="nav-item" data-tab="ps"><span class="ic">🔢</span><span>解题步骤</span></button>
+    </nav>
+    <div class="rail-foot">数据保存在本地浏览器，关闭不丢失 · 闹钟需保持页面打开</div>
+  </aside>
+
+  <!-- 手机端底部导航 -->
+  <nav class="botbar" id="botnav">
+    <button class="nav-item active" data-tab="cal"><span class="ic">📅</span><span>日历</span></button>
+    <button class="nav-item" data-tab="kp"><span class="ic">📝</span><span>知识点</span></button>
+    <button class="nav-item" data-tab="mm"><span class="ic">🧠</span><span>导图</span></button>
+    <button class="nav-item" data-tab="ps"><span class="ic">🔢</span><span>解题</span></button>
+  </nav>
+
+  <!-- 主区 -->
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2 id="pageTitle">日程日历</h2>
+        <div class="sub" id="pageSub">按日期与时间段安排你的英语家教任务，到点自动提醒</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn primary sm" id="installBtn" style="display:none">⬇ 安装为桌面应用</button>
+        <span class="clock" id="clock">--:--</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- ===== 日程日历 ===== -->
+      <section class="tab active" id="tab-cal">
+        <div class="cal-wrap">
+          <div class="cal-side">
+            <div class="cal-head">
+              <div class="ym" id="calYM">—</div>
+              <div style="display:flex;gap:7px">
+                <button class="btn sm ghost" id="prevMonth">‹ 上月</button>
+                <button class="btn sm" id="todayBtn">今天</button>
+                <button class="btn sm ghost" id="nextMonth">下月 ›</button>
+              </div>
+            </div>
+            <div class="cal-grid">
+              <div class="cal-week"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+              <div id="calBody" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px"></div>
+            </div>
+            <div class="cal-legend">
+              <span><i style="background:var(--brand)"></i>待办</span>
+              <span><i style="background:var(--ok)"></i>已完成</span>
+              <span><i style="background:var(--warn)"></i>设有闹钟</span>
+            </div>
+          </div>
+          <div class="day-side">
+            <div class="day-head">
+              <div>
+                <div class="dt" id="dayDate">—</div>
+                <div style="margin-top:7px"><div class="progress"><i id="progBar" style="width:0"></i></div><div class="prog-txt" id="progTxt">0 项任务</div></div>
+              </div>
+              <button class="btn primary" id="addTaskBtn">+ 新增任务</button>
+            </div>
+            <div class="task-list" id="taskList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 知识点构建 ===== -->
+      <section class="tab" id="tab-kp">
+        <div class="kp-wrap">
+          <div class="kp-side">
+            <div class="head">
+              <h3 style="font-size:14px">知识点列表</h3>
+              <button class="btn primary sm" id="newKpBtn">+ 新建</button>
+            </div>
+            <div class="kp-list" id="kpList"></div>
+          </div>
+          <div class="kp-edit scroll" id="kpEdit"></div>
+        </div>
+      </section>
+
+      <!-- ===== 思维导图 ===== -->
+      <section class="tab" id="tab-mm">
+        <div class="mm-wrap">
+          <div class="mm-toolbar">
+            <button class="btn primary" id="mmFromKp">从当前知识点生成大纲</button>
+            <button class="btn" id="mmRender">渲染导图</button>
+            <button class="btn ghost" id="mmExport">下载 SVG</button>
+            <span style="font-size:11px;color:var(--muted);margin-left:auto">左侧编辑 Markdown 大纲，右侧自动生成思维导图（可缩放/拖动）</span>
+          </div>
+          <div class="mm-body">
+            <div class="mm-edit">
+              <div class="mh"><span>Markdown 大纲</span><span style="font-weight:400;color:var(--muted);font-size:11px"># 一级 / - 二级</span></div>
+              <textarea id="mmMd" spellcheck="false"># 英语知识点
+## 句型结构
+- 主谓宾
+- 时态变化
+## 易错点
+- 第三人称单数
+- 时态混淆</textarea>
+            </div>
+            <div class="mm-view">
+              <svg id="mindmap-svg"></svg>
+              <div id="mmFallback" class="mm-fallback" style="display:none"></div>
+              <div class="mm-tip" id="mmTip">鼠标滚轮缩放 · 拖拽平移</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 解题步骤 ===== -->
+      <section class="tab" id="tab-ps">
+        <div class="ps-wrap">
+          <div class="ps-side">
+            <div class="head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+              <h3 style="font-size:14px">题目列表</h3>
+              <button class="btn primary sm" id="newPsBtn">+ 新建</button>
+            </div>
+            <div class="ps-list" id="psList"></div>
+          </div>
+          <div class="ps-edit" id="psEdit"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- 弹层：新增/编辑任务 -->
+<div class="mask" id="taskMask">
+  <div class="modal">
+    <div class="modal-h"><span id="taskModalTitle">新增任务</span><button class="icon-btn" onclick="closeMask('taskMask')">✕</button></div>
+    <div class="modal-b">
+      <div class="field">
+        <label class="fl">日期</label>
+        <input type="date" class="in" id="fDate">
+      </div>
+      <div class="field row-time">
+        <div>
+          <label class="fl">时间</label>
+          <input type="time" class="in" id="fTime">
+        </div>
+        <div>
+          <label class="fl">类别</label>
+          <select class="in" id="fCat">
+            <option>上课</option><option>备课</option><option>知识点</option><option>其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">任务标题</label>
+        <input type="text" class="in" id="fTitle" placeholder="例：给小明上现在进行时">
+      </div>
+      <div class="field">
+        <label class="fl">详细说明（可选）</label>
+        <textarea class="in" id="fDesc" rows="3" placeholder="备注、教材页码、学生易错点提醒等"></textarea>
+      </div>
+      <div class="field">
+        <label class="switch"><input type="checkbox" id="fAlarm" checked><span class="track"></span><span>到点闹钟提醒</span></label>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn ghost" onclick="closeMask('taskMask')">取消</button>
+      <button class="btn primary" id="saveTaskBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹层：新增/编辑知识点元信息 -->
+<div class="mask" id="kpMask">
+  <div class="modal" style="width:420px">
+    <div class="modal-h"><span id="kpModalTitle">新建知识点</span><button class="icon-btn" onclick="closeMask('kpMask')">✕</button></div>
+    <div class="modal-b">
+      <div class="field">
+        <label class="fl">知识点标题</label>
+        <input type="text" class="in" id="fKpTitle" placeholder="例：一般现在时 / 第三人称单数">
+      </div>
+      <div class="field">
+        <label class="fl">主题分类</label>
+        <input type="text" class="in" id="fKpTopic" placeholder="例：时态 / 句型 / 词汇">
+      </div>
+      <div class="field">
+        <label class="fl">起始简单句子</label>
+        <input type="text" class="in" id="fKpSentence" placeholder="例：I play football.">
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn ghost" onclick="closeMask('kpMask')">取消</button>
+      <button class="btn primary" id="saveKpBtn">创建并开始编辑</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
+<script>
+/* ===================== 基础工具 ===================== */
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function todayStr(){return fmt(new Date());}
+
+/* ===================== 数据层 ===================== */
+const DB={
+  load(k,def){try{const v=localStorage.getItem('etb_'+k);return v?JSON.parse(v):def;}catch(e){return def;}},
+  save(k,v){localStorage.setItem('etb_'+k,JSON.stringify(v));}
+};
+let state={
+  tasks: DB.load('tasks',[]),
+  kps: DB.load('kps',[]),
+  problems: DB.load('problems',[]),
+  viewMonth: new Date(),
+  selDate: todayStr(),
+  curKp: null,
+  curPs: null,
+  curTab: 'cal',
+  editTaskId: null,
+  editKpMeta: null
+};
+const saveTasks=()=>DB.save('tasks',state.tasks);
+const saveKps=()=>DB.save('kps',state.kps);
+const saveProblems=()=>DB.save('problems',state.problems);
+
+/* ===================== 导航 ===================== */
+const TABS={cal:['日程日历','按日期与时间段安排你的英语家教任务，到点自动提醒'],
+  kp:['知识点构建','从简单句子起步，逐步拓展、深挖、设问，最后生成简洁总结'],
+  mm:['思维导图','把知识点结构化成思维导图，一目了然'],
+  ps:['解题步骤','拆解题目步骤，让学生看清每一步怎么想、怎么写']};
+$('#nav').addEventListener('click',e=>onNav(e));
+$('#botnav').addEventListener('click',e=>onNav(e));
+function onNav(e){
+  const b=e.target.closest('.nav-item');if(!b)return;
+  switchTab(b.dataset.tab);
+}
+function switchTab(t){
+  state.curTab=t;
+  document.querySelectorAll('#nav .nav-item,#botnav .nav-item').forEach(n=>n.classList.toggle('active',n.dataset.tab===t));
+  $$('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
+  $('#pageTitle').textContent=TABS[t][0];$('#pageSub').textContent=TABS[t][1];
+  if(t==='mm') setTimeout(renderMindmap,60);
+  if(t==='kp') renderKpList();
+  if(t==='ps') renderPsList();
+  // 手机端：切换后滚动到顶部
+  window.scrollTo(0,0);
+  const c=$('.content');if(c)c.scrollTop=0;
+}
+
+/* ===================== 时钟 ===================== */
+function tick(){
+  const d=new Date();
+  $('#clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+setInterval(tick,1000);tick();
+
+/* ===================== 日历 ===================== */
+function renderCalendar(){
+  const m=state.viewMonth;
+  const y=m.getFullYear(),mo=m.getMonth();
+  const names=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  $('#calYM').innerHTML=`${y} 年 ${names[mo]} <small>${m.toLocaleDateString('zh-CN',{weekday:'long'})}</small>`;
+  const startOff=new Date(y,mo,1).getDay();
+  const daysInMonth=new Date(y,mo+1,0).getDate();
+  const prevDays=new Date(y,mo,0).getDate();
+  const cells=[];
+  for(let i=startOff-1;i>=0;i--) cells.push({d:prevDays-i,mute:true,date:null});       // 上月末尾
+  for(let d=1;d<=daysInMonth;d++) cells.push({d,date:fmt(new Date(y,mo,d))});           // 本月
+  let next=1; while(cells.length<42) cells.push({d:next++,mute:true,date:null});       // 下月开头补满42格
+  const body=$('#calBody');body.innerHTML='';
+  const today=todayStr();
+  cells.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='cal-cell'+(c.mute?' mute':'')+(c.date===today?' today':'')+(c.date===state.selDate?' sel':'');
+    if(c.date){el.dataset.date=c.date;el.onclick=()=>{state.selDate=c.date;renderCalendar();renderTasks();};}
+    const dots=state.tasks.filter(t=>t.date===c.date);
+    let dotHtml='';
+    if(!c.mute && dots.length){
+      dotHtml='<div class="dots">'+dots.slice(0,4).map(d=>`<span class="dot ${d.done?'done':''}"></span>`).join('')+'</div>';
+    }
+    el.innerHTML=`<div class="d">${c.d||''}</div>${dotHtml}`;
+    body.appendChild(el);
+  });
+}
+$('#prevMonth').onclick=()=>{state.viewMonth=new Date(state.viewMonth.getFullYear(),state.viewMonth.getMonth()-1,1);renderCalendar();};
+$('#nextMonth').onclick=()=>{state.viewMonth=new Date(state.viewMonth.getFullYear(),state.viewMonth.getMonth()+1,1);renderCalendar();};
+$('#todayBtn').onclick=()=>{state.viewMonth=new Date();state.selDate=todayStr();renderCalendar();renderTasks();};
+
+/* ===================== 任务列表/打卡 ===================== */
+function renderTasks(){
+  const list=state.tasks.filter(t=>t.date===state.selDate).sort((a,b)=>a.time.localeCompare(b.time));
+  const d=new Date(state.selDate+'T00:00:00');
+  $('#dayDate').textContent=`${d.getMonth()+1}月${d.getDate()}日 · ${'星期日一二三四五六'[d.getDay()]}（${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}）`;
+  const done=list.filter(t=>t.done).length;
+  $('#progBar').style.width=list.length?((done/list.length)*100)+'%':'0';
+  $('#progTxt').textContent=list.length?`${done}/${list.length} 已完成 · ${list.length-done} 待办`:'今日暂无任务';
+  const box=$('#taskList');
+  if(!list.length){box.innerHTML=`<div class="empty"><span class="em">🗒️</span>这一天还没有任务<br>点击右上角"新增任务"开始安排</div>`;return;}
+  box.innerHTML=list.map(t=>`
+    <div class="task ${t.done?'done':''}" data-id="${t.id}">
+      <div class="chk ${t.done?'on':''}" onclick="toggleTask('${t.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="t-time">${t.time}</div>
+      <div class="t-mid">
+        <div class="t-title">${esc(t.title)}</div>
+        ${t.desc?`<div class="t-desc">${esc(t.desc)}</div>`:''}
+        <div class="t-meta">
+          <span class="tag ${t.cat}">${t.cat}</span>
+          ${t.alarm?'<span class="bell">🔔 闹钟</span>':''}
+          ${!t.done&&t.date>=todayStr()?relTime(t):''}
+          ${t.done?'<span class="tag" style="background:#e8f7ed;color:var(--ok)">已打卡</span>':''}
+        </div>
+      </div>
+      <div class="t-act">
+        <button class="icon-btn" title="编辑" onclick="editTask('${t.id}')">✏️</button>
+        <button class="icon-btn" title="删除" onclick="delTask('${t.id}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+function toggleTask(id){
+  const t=state.tasks.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;if(t.done)t.notified=true; // 完成后不再提醒
+  saveTasks();renderTasks();renderCalendar();
+}
+function editTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;openTaskModal(t);}
+function delTask(id){if(!confirm('删除该任务？'))return;state.tasks=state.tasks.filter(x=>x.id!==id);saveTasks();renderTasks();renderCalendar();}
+$('#addTaskBtn').onclick=()=>openTaskModal(null);
+function openTaskModal(t){
+  state.editTaskId=t?t.id:null;
+  $('#taskModalTitle').textContent=t?'编辑任务':'新增任务';
+  $('#fDate').value=t?t.date:state.selDate;
+  $('#fTime').value=t?t.time:'09:00';
+  $('#fCat').value=t?t.cat:'上课';
+  $('#fTitle').value=t?t.title:'';
+  $('#fDesc').value=t?t.desc:'';
+  $('#fAlarm').checked=t?t.alarm:true;
+  $('#taskMask').classList.add('show');
+}
+$('#saveTaskBtn').onclick=()=>{
+  const date=$('#fDate').value,time=$('#fTime').value,title=$('#fTitle').value.trim();
+  if(!date||!time||!title){toast('请填写日期、时间和标题');return;}
+  const data={date,time,title,desc:$('#fDesc').value.trim(),cat:$('#fCat').value,alarm:$('#fAlarm').checked};
+  if(state.editTaskId){
+    const t=state.tasks.find(x=>x.id===state.editTaskId);
+    Object.assign(t,data);
+  }else{
+    state.tasks.push({id:uid(),done:false,notified:false,...data});
+  }
+  saveTasks();closeMask('taskMask');
+  state.selDate=date;state.viewMonth=new Date(date+'T00:00:00');
+  renderCalendar();renderTasks();
+  toast('任务已保存','✅');
+};
+
+/* ===================== 闹钟系统 ===================== */
+async function ensureNotify(){
+  if(!('Notification'in window))return false;
+  if(Notification.permission==='granted')return true;
+  if(Notification.permission!=='denied'){const p=await Notification.requestPermission();return p==='granted';}
+  return false;
+}
+function checkAlarms(){
+  const now=new Date();const ds=fmt(now);
+  const ts=pad(now.getHours())+':'+pad(now.getMinutes());
+  let changed=false;
+  state.tasks.forEach(t=>{
+    if(t.alarm&&!t.done&&!t.notified&&t.date===ds&&t.time<=ts){
+      t.notified=true;changed=true;fireAlarm(t);
+    }
+  });
+  if(changed)saveTasks();
+}
+async function fireAlarm(t){
+  await ensureNotify();
+  if('Notification'in window&&Notification.permission==='granted'){
+    new Notification('⏰ '+t.time+' 任务提醒',{body:t.title+(t.desc?'\n'+t.desc:''),tag:t.id});
+  }
+  playBeeps();toast('⏰ '+t.time+' '+t.title,t.desc||'到点了，开始吧！','alarm');
+}
+let audioCtx;
+function playBeep(freq=880,dur=0.25,vol=0.25){
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.type='sine';o.frequency.value=freq;
+    const t0=audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(vol,t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.start(t0);o.stop(t0+dur);
+  }catch(e){}
+}
+function playBeeps(){playBeep(880,0.22);setTimeout(()=>playBeep(660,0.22),280);setTimeout(()=>playBeep(990,0.3),560);}
+setInterval(checkAlarms,20000);
+
+/* 手机端闹钟补偿：页面重新可见时补检 + Wake Lock 屏幕常亮 */
+// 页面重新可见时，检查锁屏期间错过的任务
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){
+    checkAlarms(); // 补检
+    renderTasks(); // 刷新倒计时
+  }
+});
+// 页面加载时也补检一次
+window.addEventListener('load',()=>setTimeout(checkAlarms,500));
+
+// 倒计时：返回距现在的文字
+function relTime(t){
+  const now=new Date();
+  const ds=t.date+'T'+t.time+':00';
+  const target=new Date(ds);
+  const diff=target-now;
+  const abs=Math.abs(diff);
+  const min=Math.floor(abs/60000);
+  const hr=Math.floor(min/60);
+  if(diff>0){
+    if(min<1)return'<span style="color:var(--danger);font-weight:700">即将</span>';
+    if(min<60)return`<span style="color:var(--warn)">还有 ${min} 分钟</span>`;
+    return`<span style="color:var(--muted)">还有 ${hr} 小时</span>`;
+  }else{
+    if(min<60)return`<span style="color:var(--danger);font-weight:700">已过 ${min} 分钟</span>`;
+    return`<span style="color:var(--muted)">已过 ${hr} 小时</span>`;
+  }
+}
+
+// Wake Lock：上课时保持屏幕常亮（手机端尤其有用）
+let wakeLock=null;
+async function keepAwake(on){
+  try{
+    if(on){
+      if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}
+    }else if(wakeLock){wakeLock.release();wakeLock=null;}
+  }catch(e){}
+}
+// 页面可见时定期刷新倒计时（每分钟）
+setInterval(()=>{if(!document.hidden&&state.curTab==='cal')renderTasks();},60000);
+
+
+/* ===================== 知识点构建 ===================== */
+function renderKpList(){
+  const box=$('#kpList');
+  if(!state.kps.length){box.innerHTML=`<div class="empty"><span class="em">📝</span>还没有知识点<br>点击"新建"创建</div>`;return;}
+  box.innerHTML=state.kps.map(k=>`
+    <div class="kp-card ${state.curKp===k.id?'active':''}" onclick="selectKp('${k.id}')">
+      <div class="kt">${esc(k.title)}<span class="icon-btn" onclick="event.stopPropagation();delKp('${k.id}')">🗑️</span></div>
+      <div class="km">${esc(k.topic||'未分类')} · ${(k.expansions||[]).length}步拓展 · ${(k.qas||[]).length}个问题</div>
+    </div>`).join('');
+}
+function selectKp(id){state.curKp=id;renderKpList();renderKpEdit();}
+function delKp(id){if(!confirm('删除该知识点？'))return;state.kps=state.kps.filter(k=>k.id!==id);if(state.curKp===id)state.curKp=null;saveKps();renderKpList();renderKpEdit();}
+$('#newKpBtn').onclick=()=>{state.editKpMeta=null;$('#kpModalTitle').textContent='新建知识点';$('#fKpTitle').value='';$('#fKpTopic').value='';$('#fKpSentence').value='';$('#kpMask').classList.add('show');};
+$('#saveKpBtn').onclick=()=>{
+  const title=$('#fKpTitle').value.trim(),sentence=$('#fKpSentence').value.trim();
+  if(!title){toast('请填写标题');return;}
+  const kp={id:uid(),title,topic:$('#fKpTopic').value.trim()||'未分类',sentence:sentence||'待补充',expansions:[],deepDive:'',qas:[],summary:'',updated:Date.now()};
+  state.kps.unshift(kp);state.curKp=kp.id;saveKps();closeMask('kpMask');renderKpList();renderKpEdit();toast('知识点已创建','继续在右侧逐步完善');
+};
+function curKp(){return state.kps.find(k=>k.id===state.curKp);}
+function renderKpEdit(){
+  const k=curKp();const box=$('#kpEdit');
+  if(!k){box.innerHTML=`<div class="empty"><span class="em">🧩</span>选择左侧知识点，或新建一个<br>从简单句子出发，逐步拓展、深挖</div>`;return;}
+  box.innerHTML=`
+    <div class="kp-toolbar">
+      <button class="btn primary" onclick="saveKpEdit()">💾 保存全部</button>
+      <button class="btn" onclick="autoSummary()">✨ 生成总结大纲</button>
+      <button class="btn" onclick="kpToMindmap()">🧠 一键生成思维导图</button>
+      <button class="btn ghost" onclick="insTemplate()">📋 插入示例模板</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="si">🎯</span><h3>知识点标题与起始句</h3></div>
+      <div class="grid2">
+        <div><label class="fl">标题</label><input class="in" id="kp_title" value="${esc(k.title)}"></div>
+        <div><label class="fl">主题分类</label><input class="in" id="kp_topic" value="${esc(k.topic||'')}"></div>
+      </div>
+      <div style="margin-top:11px"><label class="fl">起始简单句子</label><input class="in" id="kp_sentence" value="${esc(k.sentence||'')}" placeholder="最基础的那一句"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="si">📈</span><h3>逐步拓展</h3><span class="hint">由浅入深，每步加一个变化</span></div>
+      <div id="kp_expand"></div>
+      <div class="sub-add" style="margin-top:9px"><button class="btn sm" onclick="addExpand()">+ 添加拓展步骤</button></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="si">⛏️</span><h3>深挖讲解</h3><span class="hint">语法原理、用法规则、注意事项</span></div>
+      <textarea class="in" id="kp_deep" rows="6" placeholder="这里展开讲解该知识点的核心原理，例如：&#10;- 为什么这样用 / 语法结构拆解&#10;- 适用场景与例外情况&#10;- 与相近知识点的区别">${esc(k.deepDive||'')}</textarea>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="si">❓</span><h3>学生常见问题模拟</h3><span class="hint">预判学生疑问并给标准解答</span></div>
+      <div id="kp_qa"></div>
+      <div class="sub-add" style="margin-top:9px"><button class="btn sm" onclick="addQa()">+ 添加问题</button></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="si">✅</span><h3>知识点总结</h3><span class="hint">准确·全面·简洁</span></div>
+      <textarea class="in" id="kp_summary" rows="5" placeholder="用 3~6 条要点做最终总结，建议每条一行">${esc(k.summary||'')}</textarea>
+      <div class="summary-box" id="kp_summary_view" style="margin-top:11px;${k.summary?'':'display:none'}">${esc(k.summary||'')}</div>
+    </div>`;
+  renderExpand(k);renderQa(k);
+}
+function renderExpand(k){
+  const box=$('#kp_expand');const arr=k.expansions||[];
+  if(!arr.length){box.innerHTML='<div class="empty" style="padding:14px">还没有拓展步骤，点击下方按钮添加</div>';return;}
+  box.innerHTML=arr.map((e,i)=>`
+    <div class="step-item">
+      <div class="step-head"><span class="sn">步骤 ${i+1}</span><button class="icon-btn" onclick="delExpand(${i})">🗑️</button></div>
+      <label class="fl">拓展后的句子</label>
+      <input class="in" value="${esc(e.sentence)}" oninput="updateExpand(${i},'sentence',this.value)" placeholder="在这一步变化后的句子">
+      <label class="fl" style="margin-top:9px">语法解析</label>
+      <textarea class="in" rows="2" oninput="updateExpand(${i},'expl',this.value)" placeholder="解释这一步增加了什么、为什么">${esc(e.expl||'')}</textarea>
+    </div>`).join('');
+}
+function addExpand(){const k=curKp();if(!k)return;k.expansions=k.expansions||[];k.expansions.push({sentence:'',expl:''});renderExpand(k);saveKps();}
+function updateExpand(i,f,v){const k=curKp();k.expansions[i][f]=v;saveKps();}
+function delExpand(i){const k=curKp();k.expansions.splice(i,1);renderExpand(k);saveKps();}
+function renderQa(k){
+  const box=$('#kp_qa');const arr=k.qas||[];
+  if(!arr.length){box.innerHTML='<div class="empty" style="padding:14px">还没有常见问题，点击下方按钮添加</div>';return;}
+  box.innerHTML=arr.map((q,i)=>`
+    <div class="qa-item">
+      <div class="qh"><span class="qn">问题 ${i+1}</span><button class="icon-btn" onclick="delQa(${i})">🗑️</button></div>
+      <label class="fl">学生可能问的问题</label>
+      <input class="in" value="${esc(q.q)}" oninput="updateQa(${i},'q',this.value)" placeholder="例：为什么要加-s？">
+      <label class="fl" style="margin-top:9px">标准解答</label>
+      <textarea class="in" rows="2" oninput="updateQa(${i},'a',this.value)" placeholder="给出准确易懂的解答">${esc(q.a||'')}</textarea>
+    </div>`).join('');
+}
+function addQa(){const k=curKp();if(!k)return;k.qas=k.qas||[];k.qas.push({q:'',a:''});renderQa(k);saveKps();}
+function updateQa(i,f,v){const k=curKp();k.qas[i][f]=v;saveKps();}
+function delQa(i){const k=curKp();k.qas.splice(i,1);renderQa(k);saveKps();}
+function saveKpEdit(){
+  const k=curKp();if(!k)return;
+  k.title=$('#kp_title').value.trim();k.topic=$('#kp_topic').value.trim();k.sentence=$('#kp_sentence').value.trim();
+  k.deepDive=$('#kp_deep').value;k.summary=$('#kp_summary').value;k.updated=Date.now();
+  saveKps();renderKpList();
+  $('#kp_summary_view').textContent=k.summary;$('#kp_summary_view').style.display=k.summary?'block':'none';
+  toast('知识点已保存','✅');
+}
+function autoSummary(){
+  const k=curKp();if(!k)return;
+  const lines=[];
+  lines.push(`【${k.title||'知识点'}】总结要点`);
+  if(k.sentence)lines.push(`1. 起始句：${k.sentence}`);
+  (k.expansions||[]).forEach((e,i)=>{if(e.sentence)lines.push(`${i+2}. 拓展：${e.sentence}${e.expl?'（'+e.expl+'）':''}`);});
+  const base=(k.expansions||[]).length+1;
+  let idx=base;
+  if(k.deepDive){k.deepDive.split('\n').filter(Boolean).forEach(l=>{lines.push(`${idx+1}. ${l.replace(/^[\d.\-、\s]+/,'')}`);idx++;});}
+  (k.qas||[]).forEach(q=>{if(q.q)lines.push(`${idx+1}. 常见疑问：${q.q}${q.a?' → '+q.a:''}`);idx++;});
+  if(lines.length<=1){toast('内容还太少，先填写一些拓展与讲解');return;}
+  k.summary=lines.join('\n');saveKps();
+  $('#kp_summary').value=k.summary;$('#kp_summary_view').textContent=k.summary;$('#kp_summary_view').style.display='block';
+  toast('已根据已填内容生成总结大纲','可在下方继续精简');
+}
+function kpToMindmap(){
+  const k=curKp();
+  if(!k){toast('请先选择一个知识点');return;}
+  $('#mmMd').value=buildKpMd(k);
+  switchTab('mm');renderMindmap();toast('已生成思维导图大纲','🧠');
+}
+function buildKpMd(k){
+  let md=`# ${k.title||'知识点'}`;
+  if(k.sentence)md+=`\n## 起始句\n- ${k.sentence}`;
+  if((k.expansions||[]).length){md+='\n## 逐步拓展';k.expansions.forEach((e,i)=>{md+=`\n- 步骤${i+1}：${e.sentence}${e.expl?`\n  - ${e.expl}`:''}`;});}
+  if(k.deepDive){md+='\n## 深挖讲解';k.deepDive.split('\n').filter(Boolean).forEach(l=>md+=`\n- ${l.replace(/^[\d.\-、\s]+/,'')}`);}
+  if((k.qas||[]).length){md+='\n## 常见问题';k.qas.forEach(q=>{md+=`\n- ${q.q}${q.a?`\n  - ${q.a}`:''}`;});}
+  if(k.summary){md+='\n## 总结';k.summary.split('\n').filter(Boolean).forEach(l=>md+=`\n- ${l.replace(/^[\d.\-、\s]+/,'')}`);}
+  return md;
+}
+function insTemplate(){
+  const k=curKp();if(!k)return;
+  if(!k.sentence)k.sentence='I play football.';
+  k.expansions=[
+    {sentence:'He plays football.',expl:'第三人称单数，动词加 -s'},
+    {sentence:'He is playing football now.',expl:'改为现在进行时，强调正在进行'},
+    {sentence:'He played football yesterday.',expl:'改为一般过去时，动词变过去式'}
+  ];
+  k.deepDive='1. 一般现在时表习惯或客观事实\n2. 第三人称单数作主语，谓语动词加 -s/-es\n3. 主语是 he/she/it 或单数名词时适用\n4. 与进行时、过去时的区别在于"时间状态"';
+  k.qas=[
+    {q:'为什么 I play 不加 -s，He plays 要加？',a:'因为 I 是第一人称，he 是第三人称单数，规则要求三单加 -s。'},
+    {q:'play 加 -s 还是 -es？',a:'直接加 -s（play→plays）；以 o、s、x、ch、sh 结尾才加 -es。'}
+  ];
+  k.summary='1. 一般现在时表习惯/事实\n2. 三单主语动词加 -s/-es\n3. play→plays（直加 s）\n4. 区分进行时/过去时的关键看时间状语';
+  saveKps();renderKpEdit();renderKpList();toast('已插入"一般现在时-三单"示例模板');
+}
+
+/* ===================== 思维导图 ===================== */
+function renderMindmap(){
+  const md=$('#mmMd').value;
+  const svg=$('#mindmap-svg');
+  const fb=$('#mmFallback');
+  if(window.markmap&&window.markmap.Transformer&&window.markmap.Markmap){
+    svg.style.display='block';fb.style.display='none';
+    try{
+      svg.innerHTML='';
+      const {Transformer,Markmap}=window.markmap;
+      const tr=new Transformer();
+      const {root}=tr.transform(md||'# 空');
+      Markmap.create(svg,{maxWidth:280,colorFreezeLevel:2,paddingX:8},root);
+      return;
+    }catch(e){console.warn('markmap error',e);}
+  }
+  // fallback
+  svg.style.display='none';fb.style.display='block';
+  fb.innerHTML=fallbackTree(md);
+  $('#mmTip').style.display='none';
+}
+function fallbackTree(md){
+  const lines=md.split('\n');let html='';let depth=0;
+  const stack=[];
+  lines.forEach(line=>{
+    if(!line.trim())return;
+    const m=line.match(/^(\s*)[-*+]\s+(.*)$/);
+    if(m){const lvl=Math.floor(m[1].length/2)+1;html+=`<div style="margin-left:${lvl*16}px">└ ${esc(m[2])}</div>`;}
+    else{const h=line.match(/^(#+)\s+(.*)$/);if(h){const lvl=h[1].length;html+=`<div style="font-weight:700;margin-left:${(lvl-1)*16}px;color:var(--brand);font-size:${17-lvl*2}px">${esc(h[2])}</div>`;}else{html+=`<div>${esc(line)}</div>`;}}
+  });
+  return html||'<div class="empty">暂无内容</div>';
+}
+$('#mmRender').onclick=renderMindmap;
+$('#mmFromKp').onclick=()=>{const k=curKp();if(!k){toast('请先在"知识点构建"中选择一个知识点');return;}$('#mmMd').value=buildKpMd(k);renderMindmap();toast('已生成大纲','🧠');};
+$('#mmExport').onclick=()=>{
+  const svg=$('#mindmap-svg');
+  if(!svg.getBBox){toast('导出失败');return;}
+  const clone=svg.cloneNode(true);
+  const xml=new XMLSerializer().serializeToString(clone);
+  const blob=new Blob([`<?xml version="1.0"?>\n${xml}`],{type:'image/svg+xml'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mindmap.svg';a.click();
+  toast('SVG 已下载','💾');
+};
+$('#mmMd').addEventListener('input',()=>clearTimeout(window._mmT),{passive:true});
+$('#mmMd').addEventListener('input',()=>{clearTimeout(window._mmT);window._mmT=setTimeout(renderMindmap,500);});
+
+/* ===================== 解题步骤 ===================== */
+function renderPsList(){
+  const box=$('#psList');
+  if(!state.problems.length){box.innerHTML=`<div class="empty"><span class="em">🔢</span>还没有题目<br>点击"新建"添加</div>`;return;}
+  box.innerHTML=state.problems.map(p=>`
+    <div class="ps-card ${state.curPs===p.id?'active':''}" onclick="selectPs('${p.id}')">
+      <div class="pt">${esc(p.title)}</div>
+      <div class="pm">${esc(p.kp||'未关联知识点')} · ${p.steps.length}步</div>
+    </div>`).join('');
+}
+function selectPs(id){state.curPs=id;renderPsList();renderPsEdit();}
+$('#newPsBtn').onclick=()=>{
+  const p={id:uid(),title:'新题目',kp:'',answer:'',steps:[{title:'分析题意',desc:''}]};
+  state.problems.unshift(p);state.curPs=p.id;saveProblems();renderPsList();renderPsEdit();
+};
+function curPs(){return state.problems.find(p=>p.id===state.curPs);}
+function renderPsEdit(){
+  const p=curPs();const box=$('#psEdit');
+  if(!p){box.innerHTML=`<div class="empty"><span class="em">🔢</span>选择左侧题目，或新建一道题<br>逐步拆解题目的解题思路</div>`;return;}
+  box.innerHTML=`
+    <div class="kp-toolbar">
+      <button class="btn primary" onclick="savePs()">💾 保存</button>
+      <button class="btn" onclick="addPsStep()">+ 添加步骤</button>
+      <button class="btn ghost" onclick="delPs()">🗑️ 删除题目</button>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><span class="si">📑</span><h3>题目信息</h3></div>
+      <div><label class="fl">题目内容</label><textarea class="in" id="ps_title" rows="2" oninput="updatePs('title',this.value)">${esc(p.title)}</textarea></div>
+      <div class="grid2" style="margin-top:11px">
+        <div><label class="fl">关联知识点</label>
+          <select class="in" id="ps_kp" onchange="updatePs('kp',this.value)">
+            <option value="">无</option>${state.kps.map(k=>`<option value="${esc(k.title)}" ${p.kp===k.title?'selected':''}>${esc(k.title)}</option>`).join('')}
+          </select>
+        </div>
+        <div><label class="fl">最终答案</label><input class="in" id="ps_ans" value="${esc(p.answer)}" oninput="updatePs('answer',this.value)"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><span class="si">🪜</span><h3>解题步骤</h3><span class="hint">逐步讲清"怎么想、怎么写"</span></div>
+      <div id="ps_steps"></div>
+    </div>`;
+  renderPsSteps(p);
+}
+function renderPsSteps(p){
+  const box=$('#ps_steps');
+  if(!p.steps.length){box.innerHTML='<div class="empty">还没有步骤</div>';return;}
+  box.innerHTML=p.steps.map((s,i)=>`
+    <div class="step-item">
+      <div class="step-head"><span class="sn">第 ${i+1} 步</span><button class="icon-btn" onclick="delPsStep(${i})">🗑️</button></div>
+      <label class="fl">本步标题</label>
+      <input class="in" value="${esc(s.title)}" oninput="updatePsStep(${i},'title',this.value)" placeholder="如：确定时态 / 找主语">
+      <label class="fl" style="margin-top:9px">具体说明</label>
+      <textarea class="in" rows="2" oninput="updatePsStep(${i},'desc',this.value)" placeholder="详细解释这一步的操作与原因">${esc(s.desc||'')}</textarea>
+    </div>`).join('');
+  // 渲染流程预览
+  if(p.steps.length){box.insertAdjacentHTML('beforeend','<div style="margin-top:8px"><div class="fl" style="margin-bottom:6px">解题流程预览</div><div class="ps-solution">'+
+    p.steps.map((s,i)=>`<div class="ps-step"><div class="num">${i+1}</div><div class="body"><div class="sh">${esc(s.title||'步骤')}</div><div class="sd">${esc(s.desc||'')}</div></div></div>${i<p.steps.length-1?'<div class="arrow-down">↓</div>':''}`).join('')+
+    (p.answer?`<div class="arrow-down">↓</div><div class="ps-step"><div class="num" style="background:var(--ok)">✓</div><div class="body"><div class="sh" style="color:var(--ok)">最终答案</div><div class="sd">${esc(p.answer)}</div></div></div>`:'')+
+    '</div></div>');}
+}
+function updatePs(f,v){const p=curPs();if(!p)return;p[f]=v;saveProblems();if(f==='title')renderPsList();}
+function addPsStep(){const p=curPs();if(!p)return;p.steps.push({title:'',desc:''});saveProblems();renderPsSteps(p);}
+function updatePsStep(i,f,v){const p=curPs();p.steps[i][f]=v;saveProblems();}
+function delPsStep(i){const p=curPs();p.steps.splice(i,1);saveProblems();renderPsSteps(p);}
+function savePs(){saveProblems();renderPsList();toast('题目已保存','✅');}
+function delPs(){if(!confirm('删除该题目？'))return;state.problems=state.problems.filter(p=>p.id!==state.curPs);state.curPs=null;saveProblems();renderPsList();renderPsEdit();}
+
+/* ===================== 通用弹层/提示 ===================== */
+function closeMask(id){$('#'+id).classList.remove('show');}
+function toast(title,body='',type=''){
+  const t=document.createElement('div');t.className='toast'+(type?' '+type:'');
+  t.innerHTML=`<div class="tt">${esc(title)}</div>${body?`<div class="tb">${esc(body)}</div>`:''}`;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.style.transition='.3s';t.style.opacity='0';t.style.transform='translateX(40px)';setTimeout(()=>t.remove(),300);},5200);
+}
+document.querySelectorAll('.mask').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+/* ===================== 初始化 ===================== */
+function seedIfEmpty(){
+  if(!state.tasks.length&&!state.kps.length&&!state.problems.length){
+    const d=todayStr();
+    state.tasks=[
+      {id:uid(),date:d,time:'14:00',title:'给小明上"一般现在时"',desc:'教材 P12-14，重点：第三人称单数',cat:'上课',alarm:true,done:false,notified:false},
+      {id:uid(),date:d,time:'19:30',title:'备课：准备"现在进行时"拓展练习',desc:'准备 5 个由浅入深的句子',cat:'备课',alarm:true,done:false,notified:false}
+    ];
+    const kp={id:uid(),title:'一般现在时 · 第三人称单数',topic:'时态',sentence:'I play football.',
+      expansions:[
+        {sentence:'He plays football.',expl:'主语变 he（三单），动词 play→plays 加 -s'},
+        {sentence:'He is playing football now.',expl:'改现在进行时，表"正在进行"'},
+        {sentence:'He played football yesterday.',expl:'改一般过去时，动词变过去式 played'}
+      ],
+      deepDive:'1. 一般现在时表习惯、客观事实或经常性动作\n2. 当主语是第三人称单数(he/she/it/单数名词)时，谓语动词加 -s/-es\n3. 动词变化规则：一般直接加 s；以 o/s/x/ch/sh 结尾加 es；辅音+y 结尾变 y 为 ies\n4. 否定用 doesn\'t + 动词原形；疑问把 does 提前',
+      qas:[
+        {q:'为什么 I play 不加 -s，He plays 要加？',a:'I 是第一人称不用变；he 是第三人称单数，规则要求谓语动词加 -s。'},
+        {q:'play 加 s 还是 es？',a:'直接加 s（play→plays）；以 o、s、x、ch、sh 结尾的动词才加 es（如 go→goes，watch→watches）。'},
+        {q:'变成否定怎么写？',a:'He doesn\'t play football. 用 doesn\'t + 动词原形 play。'}
+      ],
+      summary:'1. 一般现在时表习惯/事实\n2. 三单主语 → 动词加 s/es\n3. play→plays（直加 s）；go→goes（加 es）\n4. 否定 doesn\'t+原形；疑问 does 提前\n5. 区分进行时(正在做)、过去时(已做)看时间状语',
+      updated:Date.now()};
+    state.kps=[kp];
+    state.problems=[{id:uid(),title:'用所给动词的正确形式填空：She _____ (go) to school every day.',kp:'一般现在时 · 第三人称单数',answer:'goes',steps:[
+      {title:'第一步：判断时态',desc:'看到 every day（每天），表示习惯性动作 → 用一般现在时。'},
+      {title:'第二步：找主语并判断人称',desc:'主语是 She，属于第三人称单数。'},
+      {title:'第三步：套用动词变化规则',desc:'go 以字母 o 结尾，加 es → goes。'},
+      {title:'第四步：写出答案并检查',desc:'She goes to school every day. 语法通顺，时态正确。'}
+    ]}];
+    saveTasks();saveKps();saveProblems();
+  }
+}
+function init(){
+  seedIfEmpty();
+  ensureNotify();
+  renderCalendar();renderTasks();renderKpList();renderKpEdit();renderPsList();renderPsEdit();
+}
+init();
+
+/* ===================== PWA 安装与 Service Worker ===================== */
+let deferredPrompt=null;
+const installBtn=$('#installBtn');
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  installBtn.style.display='inline-flex';
+  installBtn.onclick=async()=>{
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    const {outcome}=await deferredPrompt.userChoice;
+    if(outcome==='accepted'){
+      toast('已安装到桌面','下次可直接从桌面打开，无需浏览器');
+      installBtn.style.display='none';
+    }
+    deferredPrompt=null;
+  };
+});
+window.addEventListener('appinstalled',()=>{installBtn.style.display='none';toast('安装成功！','🎉');});
+// Service Worker 注册（离线缓存）
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{
+    console.log('SW 已注册，支持离线使用');
+  }).catch(err=>console.warn('SW 注册失败:',err));
+}
+</script>
+</body>
+</html>
